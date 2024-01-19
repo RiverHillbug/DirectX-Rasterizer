@@ -4,7 +4,7 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <d3dx11effect.h>
-
+#include "Matrix.h"
 
 Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 {
@@ -19,8 +19,14 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 	{
 		std::wcout << L"Technique not valid.\n";
 	}
-}
 
+	m_pWorldViewProjection = m_pEffect->GetVariableByName("g_WorldViewProjection")->AsMatrix();
+
+	if (!m_pWorldViewProjection->IsValid())
+	{
+		std::wcout << L"m_pWorldViewProjection is not valid.\n";
+	}
+}
 
 Effect::~Effect()
 {
@@ -58,8 +64,6 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & as
 
 	result = D3DX11CompileEffectFromFile(assetFile.c_str(), nullptr, nullptr, shaderFlags, 0, pDevice, &pEffect, &pErrorBlob);
 
-	//result = D3DX11CompileEffectFromFile(assetFile.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, shaderFlags, 0, pDevice, &pEffect, &pErrorBlob);
-
 	if (FAILED(result))
 	{
 		if (pErrorBlob != nullptr)
@@ -77,7 +81,6 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & as
 
 			std::wcout << ss.str() << std::endl;
 		}
-
 		else
 		{
 			std::wstringstream ss;
@@ -88,4 +91,9 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & as
 	}
 
 	return pEffect;
+}
+
+void Effect::SetMatrix(const dae::Matrix& matrix)
+{
+	m_pWorldViewProjection->SetMatrix((float*)&matrix);
 }

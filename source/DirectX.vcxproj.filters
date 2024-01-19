@@ -40,6 +40,7 @@
     <ClInclude Include="Effect.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="DataTypes.h" />
+    <ClInclude Include="Camera.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

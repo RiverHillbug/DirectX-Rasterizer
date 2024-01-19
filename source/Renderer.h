@@ -21,6 +21,7 @@ namespace dae
 
 	private:
 		SDL_Window* m_pWindow{};
+		struct Camera* m_pCamera{ nullptr };
 
 		int m_Width{};
 		int m_Height{};

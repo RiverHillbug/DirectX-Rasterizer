@@ -6,6 +6,7 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <d3dx11effect.h>
+#include "Camera.h"
 
 
 namespace dae {
@@ -15,6 +16,9 @@ namespace dae {
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
+
+		m_pCamera = new Camera(Vector3(0.0f, 0.0f, -10.0f), 45.0f);
+		m_pCamera->Initialize(45.0f, Vector3(0.0f, 0.0f, -10.0f), (float(m_Width) / float(m_Height)));
 
 		//Initialize DirectX pipeline
 		const HRESULT result = InitializeDirectX();
@@ -29,11 +33,16 @@ namespace dae {
 				{{-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}
 			};
 
+			/*const std::vector<Vertex> vertices{
+				{{0.0f, 3.0f, 2.0f}, {1.0f, 0.0f, 0.0f}},
+				{{3.0f, -3.0f, 2.0f}, {0.0f, 0.0f, 1.0f}},
+				{{-3.0f, -3.0f, 2.0f}, {0.0f, 1.0f, 0.0f}}
+			};*/
+
 			const std::vector<uint32_t> indices{ 0, 1, 2 };
 			Mesh* pMesh{ new Mesh(m_pDevice, L"Resources/PosCol3D.fx", vertices, indices)};
 
 			m_Meshes.push_back(pMesh);
-			//m_Meshes.emplace_back(m_pDeviceContext, m_pEffect, vertices, indices);
 		}
 		else
 		{
@@ -57,15 +66,19 @@ namespace dae {
 		}
 
 		delete m_pDeviceContext;
-		delete m_pDevice;
-		//delete DXGIFactory;*/
+		delete m_pDevice;*/
+		//delete DXGIFactory;
 	}
 
 	void Renderer::Update(const Timer* pTimer)
 	{
+		m_pCamera->Update(pTimer);
 
+		for (const auto& mesh : m_Meshes)
+		{
+			mesh->SetMatrix(*m_pCamera);
+		}
 	}
-
 
 	void Renderer::Render() const
 	{

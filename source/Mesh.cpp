@@ -2,6 +2,7 @@
 #include "DataTypes.h"
 #include "Effect.h"
 #include "Mesh.h"
+#include "Camera.h"
 
 namespace dae {
 
@@ -83,5 +84,19 @@ namespace dae {
 			m_pEffect->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContext);
 			pDeviceContext->DrawIndexed(m_IndicesCount, 0, 0);
 		}
+	}
+
+	/*void Mesh::SetMatrix(const struct dae::Matrix& matrix)
+	{
+		m_pEffect->SetMatrix(m_WorldMatrix * matrix);
+	}*/
+
+	void Mesh::SetMatrix(const Camera& camera)
+	{
+		Matrix worldView{ camera.viewMatrix * m_WorldMatrix };
+		Matrix worldViewProjection{ camera.projectionMatrix * worldView };
+		Matrix test{ m_WorldMatrix * camera.viewMatrix * camera.projectionMatrix };
+
+		m_pEffect->SetMatrix(test);
 	}
 }
