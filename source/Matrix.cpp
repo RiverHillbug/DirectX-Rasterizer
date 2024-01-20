@@ -155,7 +155,7 @@ namespace dae {
 		return { { (1.0f / (fov * aspect)), 0, 0, 0},
 				 { 0, (1.0f / fov), 0, 0 },
 				 { 0, 0, zf / (zf - zn), 1 },
-				 { 0, 0, (-zf * zn) / (zf - zn), 1 } };
+				 { 0, 0, -(zf * zn) / (zf - zn), 1 } };
 	}
 
 	Vector3 Matrix::GetAxisX() const
