@@ -6,13 +6,13 @@
 struct Vertex
 {
 	dae::Vector3 position{};
-	dae::Vector3 color{};
+	dae::Vector2 uv{};
 };
 
 struct Vertex_Out
 {
 	dae::Vector4 position{};
-	dae::Vector3 color{};
+	dae::Vector2 uv{};
 };
 
 enum class PrimitiveTopology

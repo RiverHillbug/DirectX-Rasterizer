@@ -22,3 +22,16 @@
 // Framework Headers
 #include "Timer.h"
 #include "Math.h"
+
+#define SAFE_RELEASE(p) { if (p) { (p)->Release(); (p) = nullptr; } } 
+// usage: SAFE_RELEASE(m_DevicePtr)
+
+#define RED_TEXT(text) "\033[1;31m" text "\033[0m"
+#define GREEN_TEXT(text) "\033[1;32m" text "\033[0m"
+#define MAGENTA_TEXT(text) "\033[1;35m" text "\033[0m"
+#define YELLOW_TEXT(text) "\033[1;33m" text "\033[0m"
+// usage:
+// - const char*: RED_TEXT("Red")
+// - std::string:
+//      std::string text = "Red";
+//      RED_TEXT("" + text + "")

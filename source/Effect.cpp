@@ -5,6 +5,7 @@
 #include <d3dcompiler.h>
 #include <d3dx11effect.h>
 #include "Matrix.h"
+#include "Texture.h"
 
 Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 {
@@ -12,7 +13,7 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 
 	if (m_pEffect != nullptr)
 	{
-		m_pTechnique = m_pEffect->GetTechniqueByName("DefaultTechnique");
+		m_pTechnique = m_pEffect->GetTechniqueByName(m_FilteringMethodName);
 	}
 
 	if (!m_pTechnique->IsValid())
@@ -26,11 +27,21 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 	{
 		std::wcout << L"m_pWorldViewProjection is not valid.\n";
 	}
+
+	m_pDiffuseMap = m_pEffect->GetVariableByName("g_DiffuseMap")->AsShaderResource();
+	if (!m_pDiffuseMap->IsValid())
+	{
+		std::wcout << L"g_DiffuseMap is not valid.\n";
+	}
 }
 
 Effect::~Effect()
 {
+	if (m_pTechnique)
+		m_pTechnique->Release();
 
+	if (m_pEffect)
+		m_pEffect->Release();
 }
 
 bool Effect::CreateInputLayout(ID3D11Device* pDevice, const D3D11_INPUT_ELEMENT_DESC* vertexDesc, uint32_t elementsCount)
@@ -96,4 +107,33 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & as
 void Effect::SetMatrix(const dae::Matrix& matrix)
 {
 	m_pWorldViewProjection->SetMatrix((float*)&matrix);
+}
+
+void Effect::SetDiffuseMap(const dae::Texture* pDiffuseMap)
+{
+	if (m_pDiffuseMap->IsValid())
+		m_pDiffuseMap->SetResource(pDiffuseMap->GetShaderResourceView());
+}
+
+void Effect::CycleFilteringMethods()
+{
+	switch (m_FilteringMethod)
+	{
+	case Effect::FilteringMethod::Point:
+		m_FilteringMethod = FilteringMethod::Linear;
+		m_FilteringMethodName = m_LinearFilteringMethodName;
+		break;
+
+	case Effect::FilteringMethod::Linear:
+		m_FilteringMethod = FilteringMethod::Anisotropic;
+		m_FilteringMethodName = m_AnisotropicFilteringMethodName;
+		break;
+
+	case Effect::FilteringMethod::Anisotropic:
+		m_FilteringMethod = FilteringMethod::Point;
+		m_FilteringMethodName = m_PointFilteringMethodName;
+		break;
+	}
+
+	m_pTechnique = m_pEffect->GetTechniqueByName(m_FilteringMethodName);
 }

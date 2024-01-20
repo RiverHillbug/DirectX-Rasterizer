@@ -7,7 +7,7 @@
 #include <d3dcompiler.h>
 #include <d3dx11effect.h>
 #include "Camera.h"
-
+#include "Texture.h"
 
 namespace dae {
 
@@ -17,7 +17,7 @@ namespace dae {
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 
-		m_pCamera = new Camera(Vector3(0.0f, 0.0f, -10.0f), 45.0f);
+		m_pCamera = new Camera(Vector3(0.0f, 0.0f, -50.0f), 45.0f);
 		m_pCamera->Initialize(45.0f, Vector3(0.0f, 0.0f, -10.0f), (float(m_Width) / float(m_Height)));
 
 		//Initialize DirectX pipeline
@@ -25,23 +25,26 @@ namespace dae {
 		if (result == S_OK)
 		{
 			m_IsInitialized = true;
-			std::cout << "DirectX is initialized and ready!\n";
+			std::cout << GREEN_TEXT("DirectX is initialized and ready!\n");
 
-			const std::vector<Vertex> vertices{
-				{{0.0f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},
-				{{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-				{{-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}
+			/*const std::vector<Vertex> vertices
+			{
+				{ {-3.0f, 3.0f, 2.0f}, { 0.0f, 0.0f} },
+				{ {0.0f, 3.0f, 2.0f},  { 0.5f, 0.0f} },
+				{ {3.0f, 3.0f, 2.0f},  { 1.0f, 0.0f} },
+				{ {-3.0f, 0.0f, 2.0f}, { 0.0f, 0.5f} },
+				{ {0.0f, 0.0f, 2.0f},  { 0.5f, 0.5f} },
+				{ {3.0f, 0.0f, 2.0f},  { 1.0f, 0.5f} },
+				{ {-3.0f, -3.0f, 2.0f},{ 0.0f, 1.0f} },
+				{ {0.0f, -3.0f, 2.0f}, { 0.5f, 1.0f} },
+				{ {3.0f, -3.0f, 2.0f}, { 1.0f, 1.0f} }
 			};
 
-			/*const std::vector<Vertex> vertices{
-				{{0.0f, 3.0f, 2.0f}, {1.0f, 0.0f, 0.0f}},
-				{{3.0f, -3.0f, 2.0f}, {0.0f, 0.0f, 1.0f}},
-				{{-3.0f, -3.0f, 2.0f}, {0.0f, 1.0f, 0.0f}}
-			};*/
+			const std::vector<uint32_t> indices { 3, 0, 4, 1, 5, 2, 6, 3, 7, 4, 8, 5 };*/
 
-			const std::vector<uint32_t> indices{ 0, 1, 2 };
-			Mesh* pMesh{ new Mesh(m_pDevice, L"Resources/PosCol3D.fx", vertices, indices)};
-
+			Mesh* pMesh{ new Mesh(m_pDevice, L"Resources/PosCol3D.fx", "Resources/vehicle.obj")};
+			m_pDiffuseMap = new Texture(m_pDevice, "Resources/vehicle_diffuse.png");
+			pMesh->SetDiffuseMap(m_pDiffuseMap);
 			m_Meshes.push_back(pMesh);
 		}
 		else
@@ -52,11 +55,12 @@ namespace dae {
 
 	Renderer::~Renderer()
 	{
-		/*delete m_pRenderTargetView;
-		delete m_pRenderTargetBuffer;
-		delete m_pDepthStencilView;
-		delete m_pDepthStencilBuffer;
-		delete m_pSwapChain;
+		delete m_pCamera;
+
+		for (auto pMesh : m_Meshes)
+		{
+			delete pMesh;
+		}
 
 		if (m_pDeviceContext)
 		{
@@ -65,14 +69,45 @@ namespace dae {
 			m_pDeviceContext->Release();
 		}
 
-		delete m_pDeviceContext;
-		delete m_pDevice;*/
-		//delete DXGIFactory;
+		SAFE_RELEASE(m_pDevice);
+		SAFE_RELEASE(m_pSwapChain);
+		SAFE_RELEASE(m_pDepthStencilBuffer);
+		SAFE_RELEASE(m_pDepthStencilView);
+		SAFE_RELEASE(m_pRenderTargetBuffer);
 	}
 
 	void Renderer::Update(const Timer* pTimer)
 	{
 		m_pCamera->Update(pTimer);
+
+		SDL_Event e;
+		while (SDL_PollEvent(&e))
+		{
+			switch (e.type)
+			{
+			case SDL_KEYUP:
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+				{
+					for (const auto& mesh : m_Meshes)
+					{
+						mesh->CycleFilteringMethods();
+					}
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+				{
+					m_EnableRotating = !m_EnableRotating;
+				}
+				break;
+			}
+		}
+
+		if (m_EnableRotating)
+		{
+			for (const auto& mesh : m_Meshes)
+			{
+				mesh->RotateY(m_MeshRotationSpeed * TO_RADIANS * pTimer->GetElapsed());
+			}
+		}
 
 		for (const auto& mesh : m_Meshes)
 		{

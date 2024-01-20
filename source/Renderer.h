@@ -22,6 +22,7 @@ namespace dae
 	private:
 		SDL_Window* m_pWindow{};
 		struct Camera* m_pCamera{ nullptr };
+		const float m_MeshRotationSpeed{ 30.0f };
 
 		int m_Width{};
 		int m_Height{};
@@ -31,6 +32,9 @@ namespace dae
 		class Effect* m_pEffect{ nullptr };
 
 		std::vector<class Mesh*> m_Meshes{};
+		class Texture* m_pDiffuseMap;
+		
+		bool m_EnableRotating{ false };
 
 		//DIRECTX
 		ID3D11Device* m_pDevice;
@@ -40,6 +44,7 @@ namespace dae
 		ID3D11DepthStencilView* m_pDepthStencilView;
 		ID3D11Resource* m_pRenderTargetBuffer;
 		ID3D11RenderTargetView* m_pRenderTargetView;
+
 
 		HRESULT InitializeDirectX();
 		//...
