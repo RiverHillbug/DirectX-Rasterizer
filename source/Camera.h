@@ -23,7 +23,7 @@ namespace dae
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.0f) };
 		float aspectRatio{};
 		float nearPlane{ 0.1f };
-		float farPlane{ 100.0f };
+		float farPlane{ 1000.0f };
 
 		Vector3 forward{ Vector3::UnitZ };
 		Vector3 up{ Vector3::UnitY };
@@ -31,14 +31,14 @@ namespace dae
 
 		float totalPitch{};
 		float totalYaw{};
-		const float cameraMovementSpeed{ 3.0f };
-		const float cameraRotationSpeed{ 0.75f };
+		const float cameraMovementSpeed{ 10.0f };
+		const float cameraRotationSpeed{ 2.0f };
 
 		Matrix invViewMatrix{};
 		Matrix viewMatrix{};
 		Matrix projectionMatrix{};
 
-		void Initialize(float _fovAngle = 90.0f, Vector3 _origin = { 0.0f,0.0f,0.0f }, float aspect = 1.0f)
+		void Initialize(float _fovAngle = 90.0f, Vector3 _origin = { 0.0f, 0.0f, 0.0f }, float aspect = 1.0f)
 		{
 			fovAngle = _fovAngle;
 			fov = tanf((fovAngle * TO_RADIANS) / 2.0f);

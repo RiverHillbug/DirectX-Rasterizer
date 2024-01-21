@@ -1,14 +1,11 @@
 #pragma once
 
-struct SDL_Window;
-struct SDL_Surface;
-
 namespace dae
 {
 	class Renderer final
 	{
 	public:
-		Renderer(SDL_Window* pWindow);
+		Renderer(struct SDL_Window* pWindow);
 		~Renderer();
 
 		Renderer(const Renderer&) = delete;
@@ -18,11 +15,17 @@ namespace dae
 
 		void Update(const Timer* pTimer);
 		void Render() const;
+		inline void ToggleRotation() { m_EnableRotating = !m_EnableRotating; }
+		void CycleFilteringMethods();
+		void ToggleNormalMap();
+		void StartFastRotation();
+		void StopFastRotation();
 
 	private:
-		SDL_Window* m_pWindow{};
+		struct SDL_Window* m_pWindow{};
 		struct Camera* m_pCamera{ nullptr };
 		const float m_MeshRotationSpeed{ 30.0f };
+		const float m_MeshFastRotationSpeed{ 60.0f };
 
 		int m_Width{};
 		int m_Height{};
@@ -32,9 +35,9 @@ namespace dae
 		class Effect* m_pEffect{ nullptr };
 
 		std::vector<class Mesh*> m_Meshes{};
-		class Texture* m_pDiffuseMap;
 		
-		bool m_EnableRotating{ false };
+		float m_CurrentRotationSpeed{ m_MeshRotationSpeed };
+		bool m_EnableRotating{ true };
 
 		//DIRECTX
 		ID3D11Device* m_pDevice;
@@ -44,7 +47,6 @@ namespace dae
 		ID3D11DepthStencilView* m_pDepthStencilView;
 		ID3D11Resource* m_pRenderTargetBuffer;
 		ID3D11RenderTargetView* m_pRenderTargetView;
-
 
 		HRESULT InitializeDirectX();
 		//...

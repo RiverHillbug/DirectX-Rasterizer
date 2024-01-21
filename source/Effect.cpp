@@ -21,17 +21,46 @@ Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 		std::wcout << L"Technique not valid.\n";
 	}
 
-	m_pWorldViewProjection = m_pEffect->GetVariableByName("g_WorldViewProjection")->AsMatrix();
-
-	if (!m_pWorldViewProjection->IsValid())
+	m_pWorldViewProjectionMatrix = m_pEffect->GetVariableByName("g_WorldViewProjection")->AsMatrix();
+	if (!m_pWorldViewProjectionMatrix->IsValid())
 	{
-		std::wcout << L"m_pWorldViewProjection is not valid.\n";
+		std::wcout << L"m_pWorldViewProjectionMatrix is not valid.\n";
+	}
+
+	m_pWorldMatrix = m_pEffect->GetVariableByName("g_WorldMatrix")->AsMatrix();
+	if (!m_pWorldMatrix->IsValid())
+	{
+		std::wcout << L"m_pWorldMatrix is not valid.\n";
 	}
 
 	m_pDiffuseMap = m_pEffect->GetVariableByName("g_DiffuseMap")->AsShaderResource();
 	if (!m_pDiffuseMap->IsValid())
 	{
 		std::wcout << L"g_DiffuseMap is not valid.\n";
+	}
+
+	m_pNormalMap = m_pEffect->GetVariableByName("g_NormalMap")->AsShaderResource();
+	if (!m_pNormalMap->IsValid())
+	{
+		std::wcout << L"g_NormalMap is not valid.\n";
+	}
+
+	m_pSpecularMap = m_pEffect->GetVariableByName("g_SpecularMap")->AsShaderResource();
+	if (!m_pSpecularMap->IsValid())
+	{
+		std::wcout << L"g_SpecularMap is not valid.\n";
+	}
+
+	m_pGlossinessMap = m_pEffect->GetVariableByName("g_GlossinessMap")->AsShaderResource();
+	if (!m_pGlossinessMap->IsValid())
+	{
+		std::wcout << L"g_GlossinessMap is not valid.\n";
+	}
+
+	m_pNormalMapEnabled = m_pEffect->GetVariableByName("g_NormalMapEnabled")->AsScalar();
+	if (!m_pNormalMapEnabled->IsValid())
+	{
+		std::wcout << L"g_NormalMapEnabled is not valid.\n";
 	}
 }
 
@@ -49,7 +78,7 @@ bool Effect::CreateInputLayout(ID3D11Device* pDevice, const D3D11_INPUT_ELEMENT_
 	D3DX11_PASS_DESC passDesc{};
 	m_pTechnique->GetPassByIndex(0)->GetDesc(&passDesc);
 
-	HRESULT result{ pDevice->CreateInputLayout(vertexDesc, elementsCount, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &m_pInputLayout) };
+	const HRESULT result{ pDevice->CreateInputLayout(vertexDesc, elementsCount, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &m_pInputLayout) };
 
 	if (FAILED(result))
 	{
@@ -62,9 +91,8 @@ bool Effect::CreateInputLayout(ID3D11Device* pDevice, const D3D11_INPUT_ELEMENT_
 
 ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & assetFile)
 {
-	HRESULT result;
 	ID3D10Blob* pErrorBlob{ nullptr };
-	ID3DX11Effect* pEffect;
+	ID3DX11Effect* pEffect{ nullptr };
 
 	DWORD shaderFlags = 0;
 
@@ -73,10 +101,11 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & as
 	shaderFlags = D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	result = D3DX11CompileEffectFromFile(assetFile.c_str(), nullptr, nullptr, shaderFlags, 0, pDevice, &pEffect, &pErrorBlob);
-
+	const HRESULT result = D3DX11CompileEffectFromFile(assetFile.c_str(), nullptr, nullptr, shaderFlags, 0, pDevice, &pEffect, &pErrorBlob);
 	if (FAILED(result))
 	{
+		pEffect = nullptr;
+
 		if (pErrorBlob != nullptr)
 		{
 			const char* pErrors = static_cast<char*>(pErrorBlob->GetBufferPointer());
@@ -97,7 +126,6 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & as
 			std::wstringstream ss;
 			ss << "EffectLoader: Failed to CreateEffectFromFile!\nPath: " << assetFile;
 			std::wcout << ss.str() << std::endl;
-			return nullptr;
 		}
 	}
 
@@ -106,13 +134,36 @@ ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring & as
 
 void Effect::SetMatrix(const dae::Matrix& matrix)
 {
-	m_pWorldViewProjection->SetMatrix((float*)&matrix);
+	m_pWorldViewProjectionMatrix->SetMatrix((float*)&matrix);
+}
+
+void Effect::SetWorldMatrix(const dae::Matrix& matrix)
+{
+	m_pWorldMatrix->SetMatrix((float*)&matrix);
 }
 
 void Effect::SetDiffuseMap(const dae::Texture* pDiffuseMap)
 {
 	if (m_pDiffuseMap->IsValid())
 		m_pDiffuseMap->SetResource(pDiffuseMap->GetShaderResourceView());
+}
+
+void Effect::SetNormalMap(const dae::Texture* pNormalMap)
+{
+	if (m_pNormalMap->IsValid())
+		m_pNormalMap->SetResource(pNormalMap->GetShaderResourceView());
+}
+
+void Effect::SetSpecularMap(const dae::Texture* pSpecularMap)
+{
+	if (m_pSpecularMap->IsValid())
+		m_pSpecularMap->SetResource(pSpecularMap->GetShaderResourceView());
+}
+
+void Effect::SetGlossinessMap(const dae::Texture* pGlossinessMap)
+{
+	if (m_pGlossinessMap->IsValid())
+		m_pGlossinessMap->SetResource(pGlossinessMap->GetShaderResourceView());
 }
 
 void Effect::CycleFilteringMethods()
@@ -122,18 +173,29 @@ void Effect::CycleFilteringMethods()
 	case Effect::FilteringMethod::Point:
 		m_FilteringMethod = FilteringMethod::Linear;
 		m_FilteringMethodName = m_LinearFilteringMethodName;
+		std::cout << YELLOW_TEXT("Filtering Method: Linear\n");
 		break;
 
 	case Effect::FilteringMethod::Linear:
 		m_FilteringMethod = FilteringMethod::Anisotropic;
 		m_FilteringMethodName = m_AnisotropicFilteringMethodName;
+		std::cout << YELLOW_TEXT("Filtering Method: Anisotropic\n");
 		break;
 
 	case Effect::FilteringMethod::Anisotropic:
 		m_FilteringMethod = FilteringMethod::Point;
 		m_FilteringMethodName = m_PointFilteringMethodName;
+		std::cout << YELLOW_TEXT("Filtering Method: Point\n");
 		break;
 	}
 
 	m_pTechnique = m_pEffect->GetTechniqueByName(m_FilteringMethodName);
+}
+
+void Effect::ToggleNormalMap()
+{
+	m_NormalMapEnabledValue = !m_NormalMapEnabledValue;
+	m_pNormalMapEnabled->SetBool(&m_NormalMapEnabledValue);
+
+	std::cout << YELLOW_TEXT("Normal map is ") << (m_NormalMapEnabledValue ? GREEN_TEXT("enabled.\n") : RED_TEXT("disabled.\n"));
 }

@@ -28,7 +28,7 @@ int main(int argc, char* args[])
 	const uint32_t height = 480;
 
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"DirectX - Sbriye Seher Sevik - 2DAE09",
+		"DirectX - Sabriye Seher Sevik - 2DAE09",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		width, height, 0);
@@ -42,7 +42,7 @@ int main(int argc, char* args[])
 
 	//Start loop
 	pTimer->Start();
-	float printTimer = 0.f;
+	float printTimer = 0.0f;
 	bool isLooping = true;
 	while (isLooping)
 	{
@@ -55,11 +55,32 @@ int main(int argc, char* args[])
 			case SDL_QUIT:
 				isLooping = false;
 				break;
-			case SDL_KEYUP:
-				//Test for a key
-				//if (e.key.keysym.scancode == SDL_SCANCODE_X)
+			case SDL_KEYDOWN:
+				if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT)
+				{
+					pRenderer->StartFastRotation();
+				}
 				break;
-			default: ;
+			case SDL_KEYUP:
+			{
+				switch (e.key.keysym.scancode)
+				{
+				case SDL_SCANCODE_LSHIFT:
+					pRenderer->StopFastRotation();
+					break;
+				case SDL_SCANCODE_F4:
+					pRenderer->CycleFilteringMethods();
+					break;
+				case SDL_SCANCODE_F5:
+					pRenderer->ToggleRotation();
+					break;
+				case SDL_SCANCODE_F6:
+					pRenderer->ToggleNormalMap();
+					break;
+				}
+
+				break;
+			}
 			}
 		}
 

@@ -10,9 +10,10 @@ namespace dae {
 		if (pSurface == nullptr)
 		{
 			std::cerr << "Texture: error when calling IMG_Load: " << SDL_GetError() << std::endl;
+			return;
 		}
 
-		DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		const DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		D3D11_TEXTURE2D_DESC textureDesc{};
 		textureDesc.Width = pSurface->w;
 		textureDesc.Height = pSurface->h;
@@ -26,16 +27,18 @@ namespace dae {
 		textureDesc.CPUAccessFlags = 0;
 		textureDesc.MiscFlags = 0;
 
-		D3D11_SUBRESOURCE_DATA initData;
+		D3D11_SUBRESOURCE_DATA initData{};
 		initData.pSysMem = pSurface->pixels;
 		initData.SysMemPitch = static_cast<UINT>(pSurface->pitch);
 		initData.SysMemSlicePitch = static_cast<UINT>(pSurface->h * pSurface->pitch);
 
 		HRESULT result = pDevice->CreateTexture2D(&textureDesc, &initData, &m_pTexture);
+		SDL_FreeSurface(pSurface);
 
 		if (FAILED(result))
 		{
 			std::cerr << "Error: " << std::hex << result << std::endl;
+			return;
 		}
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
@@ -44,14 +47,15 @@ namespace dae {
 		SRVDesc.Texture2D.MipLevels = 1;
 
 		if (m_pTexture)
+		{
 			result = pDevice->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_pShaderResourceView);
 
-		if (FAILED(result))
-		{
-			std::cerr << "Error: " << std::hex << result << std::endl;
+			if (FAILED(result))
+			{
+				std::cerr << "Error: " << std::hex << result << std::endl;
+				return;
+			}
 		}
-
-		SDL_FreeSurface(pSurface);
 	}
 
 	dae::Texture::~Texture()

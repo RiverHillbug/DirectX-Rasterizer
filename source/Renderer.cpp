@@ -2,15 +2,11 @@
 #include "Renderer.h"
 #include "DataTypes.h"
 #include "Mesh.h"
-#include <dxgi.h>
-#include <d3d11.h>
-#include <d3dcompiler.h>
-#include <d3dx11effect.h>
 #include "Camera.h"
 #include "Texture.h"
 
-namespace dae {
-
+namespace dae
+{
 	Renderer::Renderer(SDL_Window* pWindow)
 		: m_pWindow(pWindow)
 	{
@@ -18,39 +14,30 @@ namespace dae {
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 
 		m_pCamera = new Camera(Vector3(0.0f, 0.0f, -50.0f), 45.0f);
-		m_pCamera->Initialize(45.0f, Vector3(0.0f, 0.0f, -10.0f), (float(m_Width) / float(m_Height)));
+		m_pCamera->Initialize(45.0f, Vector3(0.0f, 0.0f, -50.0f), (float(m_Width) / float(m_Height)));
 
 		//Initialize DirectX pipeline
 		const HRESULT result = InitializeDirectX();
-		if (result == S_OK)
-		{
-			m_IsInitialized = true;
-			std::cout << GREEN_TEXT("DirectX is initialized and ready!\n");
-
-			/*const std::vector<Vertex> vertices
-			{
-				{ {-3.0f, 3.0f, 2.0f}, { 0.0f, 0.0f} },
-				{ {0.0f, 3.0f, 2.0f},  { 0.5f, 0.0f} },
-				{ {3.0f, 3.0f, 2.0f},  { 1.0f, 0.0f} },
-				{ {-3.0f, 0.0f, 2.0f}, { 0.0f, 0.5f} },
-				{ {0.0f, 0.0f, 2.0f},  { 0.5f, 0.5f} },
-				{ {3.0f, 0.0f, 2.0f},  { 1.0f, 0.5f} },
-				{ {-3.0f, -3.0f, 2.0f},{ 0.0f, 1.0f} },
-				{ {0.0f, -3.0f, 2.0f}, { 0.5f, 1.0f} },
-				{ {3.0f, -3.0f, 2.0f}, { 1.0f, 1.0f} }
-			};
-
-			const std::vector<uint32_t> indices { 3, 0, 4, 1, 5, 2, 6, 3, 7, 4, 8, 5 };*/
-
-			Mesh* pMesh{ new Mesh(m_pDevice, L"Resources/PosCol3D.fx", "Resources/vehicle.obj")};
-			m_pDiffuseMap = new Texture(m_pDevice, "Resources/vehicle_diffuse.png");
-			pMesh->SetDiffuseMap(m_pDiffuseMap);
-			m_Meshes.push_back(pMesh);
-		}
-		else
+		if (result != S_OK)
 		{
 			std::cout << "DirectX initialization failed!\n";
+			return;
 		}
+
+		m_IsInitialized = true;
+		std::cout << GREEN_TEXT("DirectX is initialized and ready!\n");
+
+		Mesh* pMesh{ new Mesh(m_pDevice, L"Resources/PosCol3D.fx", "Resources/vehicle.obj") };
+		const Texture* pDiffuseMap = new Texture(m_pDevice, "Resources/vehicle_diffuse.png");
+		const Texture* pNormalMap = new Texture(m_pDevice, "Resources/vehicle_normal.png");
+		const Texture* pSpecularMap = new Texture(m_pDevice, "Resources/vehicle_specular.png");
+		const Texture* pGlossinessMap = new Texture(m_pDevice, "Resources/vehicle_gloss.png");
+
+		pMesh->SetDiffuseMap(pDiffuseMap);
+		pMesh->SetNormalMap(pNormalMap);
+		pMesh->SetSpecularMap(pSpecularMap);
+		pMesh->SetGlossinessMap(pGlossinessMap);
+		m_Meshes.push_back(pMesh);
 	}
 
 	Renderer::~Renderer()
@@ -80,38 +67,18 @@ namespace dae {
 	{
 		m_pCamera->Update(pTimer);
 
-		SDL_Event e;
-		while (SDL_PollEvent(&e))
-		{
-			switch (e.type)
-			{
-			case SDL_KEYUP:
-				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
-				{
-					for (const auto& mesh : m_Meshes)
-					{
-						mesh->CycleFilteringMethods();
-					}
-				}
-				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
-				{
-					m_EnableRotating = !m_EnableRotating;
-				}
-				break;
-			}
-		}
-
 		if (m_EnableRotating)
 		{
 			for (const auto& mesh : m_Meshes)
 			{
-				mesh->RotateY(m_MeshRotationSpeed * TO_RADIANS * pTimer->GetElapsed());
+				mesh->RotateY(m_CurrentRotationSpeed * TO_RADIANS * pTimer->GetElapsed());
 			}
 		}
 
 		for (const auto& mesh : m_Meshes)
 		{
 			mesh->SetMatrix(*m_pCamera);
+			mesh->SetWorldMatrix();
 		}
 	}
 
@@ -120,7 +87,7 @@ namespace dae {
 		if (!m_IsInitialized)
 			return;
 
-		constexpr float color[4]{ 0.0f, 0.0f, 0.3f, 1.0f };
+		constexpr float color[4]{ 0.39f, 0.59f, 0.93f, 1.0f };
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -130,6 +97,32 @@ namespace dae {
 		}
 		
 		m_pSwapChain->Present(0, 0);
+	}
+
+	void Renderer::CycleFilteringMethods()
+	{
+		for (const auto& mesh : m_Meshes)
+		{
+			mesh->CycleFilteringMethods();
+		}
+	}
+
+	void Renderer::ToggleNormalMap()
+	{
+		for (const auto& mesh : m_Meshes)
+		{
+			mesh->ToggleNormalMap();
+		}
+	}
+
+	void Renderer::StartFastRotation()
+	{
+		m_CurrentRotationSpeed = m_MeshFastRotationSpeed;
+	}
+
+	void Renderer::StopFastRotation()
+	{
+		m_CurrentRotationSpeed = m_MeshRotationSpeed;
 	}
 
 	HRESULT Renderer::InitializeDirectX()

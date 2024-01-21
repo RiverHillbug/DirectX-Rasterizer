@@ -93,7 +93,7 @@ namespace dae
 
 								// Optional vertex normal
 								file >> iNormal;
-								//vertex.normal = normals[iNormal - 1];
+								vertex.normal = normals[iNormal - 1];
 							}
 						}
 
@@ -118,7 +118,7 @@ namespace dae
 				file.ignore(1000, '\n');
 			}
 
-			/*//Cheap Tangent Calculations
+			//Cheap Tangent Calculations
 			for (uint32_t i = 0; i < indices.size(); i += 3)
 			{
 				uint32_t index0 = indices[i];
@@ -156,7 +156,7 @@ namespace dae
 					v.tangent.z *= -1.f;
 				}
 
-			}*/
+			}
 
 			return true;
 		}

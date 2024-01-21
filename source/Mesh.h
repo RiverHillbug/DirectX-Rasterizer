@@ -7,7 +7,7 @@ namespace dae {
 	public:
 
 		Mesh() = default;
-		Mesh(struct ID3D11Device* pDevice, const std::wstring& effectFile, std::vector<Vertex>& newVertices, std::vector<uint32_t>& newIndices);
+		Mesh(struct ID3D11Device* pDevice, const std::wstring& effectFile, std::vector<Vertex> newVertices, std::vector<uint32_t> newIndices);
 		Mesh(struct ID3D11Device* pDevice, const std::wstring& effectFile, const std::string& objFile);
 		~Mesh();
 
@@ -22,17 +22,21 @@ namespace dae {
 		void RotateZ(float roll);
 
 		void SetMatrix(const struct Camera& camera);
-		void SetDiffuseMap(const class dae::Texture* pDiffuseMap);
+		void SetWorldMatrix();
+		void SetDiffuseMap(const class Texture* pDiffuseMap);
+		void SetNormalMap(const class Texture* pNormalMap);
+		void SetSpecularMap(const class Texture* pSpecularMap);
+		void SetGlossinessMap(const class Texture* pGlossinessMap);
 		void CycleFilteringMethods();
+		void ToggleNormalMap();
 
 	private:
-		std::vector<Vertex> vertices{};
-		std::vector<uint32_t> indices{};
-		std::vector<Vertex_Out> vertices_out{};
+		std::vector<Vertex> m_Vertices{};
+		std::vector<uint32_t> m_Indices{};
 
-		class Effect* m_pEffect;
-		struct ID3D11Buffer* m_pVertexBuffer{};
-		struct ID3D11Buffer* m_pIndexBuffer{};
+		class Effect* m_pEffect{ nullptr };
+		struct ID3D11Buffer* m_pVertexBuffer{ nullptr };
+		struct ID3D11Buffer* m_pIndexBuffer{ nullptr };
 		uint32_t m_IndicesCount{};
 
 		Matrix m_TranslationMatrix{ Vector3::UnitX, Vector3::UnitY, Vector3::UnitZ, Vector3::Zero };
